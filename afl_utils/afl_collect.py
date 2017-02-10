@@ -239,6 +239,7 @@ def execute_gdb_script(out_dir, script_filename, num_samples, num_threads):
         "Exploitability Classification: ",
         "Short description: ",
         "Hash: ",
+        "    at ",
         ]
 
     queue_list = []
@@ -275,36 +276,36 @@ def execute_gdb_script(out_dir, script_filename, num_samples, num_threads):
 
     i = 1
     print("*** GDB+EXPLOITABLE SCRIPT OUTPUT ***")
-    for g in range(0, len(grepped_output)-len(grep_for)+1, len(grep_for)):
-        if grepped_output[g+3] == "EXPLOITABLE":
+    for crash in grepped_output:
+        if crash.exploitability == "EXPLOITABLE":
             cex = clr.RED
             ccl = clr.BRI
-        elif grepped_output[g+3] == "PROBABLY_EXPLOITABLE":
+        elif crash.exploitability  == "PROBABLY_EXPLOITABLE":
             cex = clr.YEL
             ccl = clr.BRI
-        elif grepped_output[g+3] == "PROBABLY_NOT_EXPLOITABLE":
+        elif crash.exploitability  == "PROBABLY_NOT_EXPLOITABLE":
             cex = clr.BRN
             ccl = clr.RST
-        elif grepped_output[g+3] == "NOT_EXPLOITABLE":
+        elif crash.exploitability  == "NOT_EXPLOITABLE":
             cex = clr.GRN
             ccl = clr.GRA
-        elif grepped_output[g+3] == "UNKNOWN":
+        elif crash.exploitability  == "UNKNOWN":
             cex = clr.BLU
             ccl = clr.GRA
         else:
             cex = clr.GRA
             ccl = clr.GRA
 
-        if len(grepped_output[g]) < 24:
+        if len(crash.sample) < 24:
             # Assume simplified sample file names,
             # so save some output space.
             ljust_width = 24
         else:
             ljust_width = 64
-        print("%s[%05d]%s %s: %s%s%s %s[%s]%s" % (clr.GRA, i, clr.RST, grepped_output[g].ljust(ljust_width, '.'), cex,
-                                                  grepped_output[g+3], clr.RST, ccl, grepped_output[g+1], clr.RST))
-        classification_data.append({'Sample': grepped_output[g], 'Classification': grepped_output[g+3],
-                                    'Classification_Description': grepped_output[g+1], 'Hash': grepped_output[g+2],
+        print("%s[%05d]%s %s: %s%s%s %s[%s]%s %s" % (clr.GRA, i, clr.RST, crash.sample.ljust(ljust_width, '.'), cex,
+                                                  crash.exploitability, clr.RST, ccl, crash.description, clr.RST, crash.line ))
+        classification_data.append({'Sample': crash.sample, 'Classification': crash.exploitability ,
+                                    'Classification_Description': crash.description, 'Hash': crash.hash,
                                     'User_Comment': ''})
         i += 1
 
@@ -320,6 +321,7 @@ def execute_gdb_script(out_dir, script_filename, num_samples, num_threads):
         os.remove(os.path.join(out_dir, "%s.%d" % (script_filename, n)))
 
     return classification_data
+
 
 
 def main(argv):
