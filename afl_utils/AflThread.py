@@ -80,6 +80,13 @@ class VerifyThread(threading.Thread):
                 self.in_queue_lock.release()
                 self.exit = True
 
+class Crash:
+    def __init__(self, sample="", exploitability="", description="", hash="", line=""):
+        self.sample=""
+        self.exploitability=""
+        self.description=""
+        self.hash=""
+        self.line=""
 
 class GdbThread(threading.Thread):
     def __init__(self, thread_id, gdb_cmd, out_dir, grep_for, out_queue, out_queue_lock):
@@ -99,15 +106,35 @@ class GdbThread(threading.Thread):
             script_output = e.output
 
         script_output = script_output.decode(errors='replace').splitlines()
-
+        
+        crashes_array=[]
+        start=0
+        end=0
+        i=0
+        #to split the crashes and put them in an array
         for line in script_output:
-            matching = [line.replace(g, '') for g in self.grep_for if g in line]
-            matching = " ".join(matching).strip('\' ')
-            matching = matching.replace(self.out_dir, '')
-            if len(matching) > 0:
-                self.out_queue_lock.acquire()
-                self.out_queue.put(matching)
-                self.out_queue_lock.release()
+            if "Crash sample:" in line:
+                start=i
+            if "Explanation:" in line:
+                crashes_array.append("\n".join(script_output[start:i+1]))
+            i+=1
+
+        for crash in crashes_array:
+            crash_obj=Crash()
+            for line in crash.split("\n"):
+                if "Crash sample: '" in line:
+                   crash_obj.sample=line.split("Crash sample: '")[1][:-1]
+                elif "Exploitability Classification: " in line:
+                   crash_obj.exploitability=line.split("Exploitability Classification: ")[1]
+                elif "Short description: " in line:
+                   crash_obj.description=line.split("Short description: ")[1]
+                elif "Hash: " in line:
+                   crash_obj.hash=line.split("Hash: ")[1]
+                elif "    at " in line:
+                   crash_obj.line=line.split("    at ")[1]
+            self.out_queue_lock.acquire()
+            self.out_queue.put(crash_obj)
+            self.out_queue_lock.release()
 
 
 class AflTminThread(threading.Thread):
