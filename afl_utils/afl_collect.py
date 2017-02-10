@@ -234,14 +234,6 @@ def execute_gdb_script(out_dir, script_filename, num_samples, num_threads):
 
     out_dir = os.path.expanduser(out_dir) + "/"
 
-    grep_for = [
-        "Crash sample: '",
-        "Exploitability Classification: ",
-        "Short description: ",
-        "Hash: ",
-        "    at ",
-        ]
-
     queue_list = []
 
     thread_list = []
@@ -257,7 +249,7 @@ def execute_gdb_script(out_dir, script_filename, num_samples, num_threads):
         out_queue_lock = threading.Lock()
         queue_list.append((out_queue, out_queue_lock))
 
-        t = AflThread.GdbThread(n, script_args, out_dir, grep_for, out_queue, out_queue_lock)
+        t = AflThread.GdbThread(n, script_args, out_dir, out_queue, out_queue_lock)
         thread_list.append(t)
         print_ok("Executing gdb+exploitable script '%s.%d'..." % (script_filename, n))
         t.daemon = True
