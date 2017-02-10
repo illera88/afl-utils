@@ -89,14 +89,13 @@ class Crash:
         self.line=""
 
 class GdbThread(threading.Thread):
-    def __init__(self, thread_id, gdb_cmd, out_dir, grep_for, out_queue, out_queue_lock):
+    def __init__(self, thread_id, gdb_cmd, out_dir, out_queue, out_queue_lock):
         threading.Thread.__init__(self)
         self.id = thread_id
         self.gdb_cmd = gdb_cmd
         self.out_dir = out_dir
         self.out_queue = out_queue
         self.out_queue_lock = out_queue_lock
-        self.grep_for = grep_for
 
     def run(self):
         try:
